@@ -1,26 +1,672 @@
-@import "tailwindcss";
+/* ================================================
+   PAGIE — Notion-like Markdown Editor
+   Design System & Global Styles
+   ================================================ */
 
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap");
+
+/* ------------------------------------------------
+   CSS Custom Properties
+   ------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors */
+  --bg-primary: #faf9f6;
+  --bg-sidebar: #f3f2ef;
+  --bg-hover: #ebeae6;
+  --bg-active: #e5e4e0;
+  --bg-code: #f0efeb;
+
+  --text-primary: #474646;
+  --text-secondary: #6b6a69;
+  --text-muted: #9a9998;
+  --text-placeholder: #b8b7b6;
+
+  --border-light: #e8e7e4;
+  --border-medium: #d8d7d4;
+
+  --accent: #8b7355;
+  --accent-hover: #7a6449;
+
+  /* Typography */
+  --font-heading:
+    "Outfit", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body:
+    "Outfit", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", "Courier New", monospace;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Layout */
+  --sidebar-width: 280px;
+  --header-height: 56px;
+  --editor-max-width: 720px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(71, 70, 70, 0.05);
+  --shadow-md: 0 2px 8px rgba(71, 70, 70, 0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ------------------------------------------------
+   Reset & Base Styles
+   ------------------------------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  min-height: 100vh;
+}
+
+/* ------------------------------------------------
+   Layout
+   ------------------------------------------------ */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: margin-left var(--transition-normal);
+}
+
+.main-wrapper.sidebar-open {
+  margin-left: var(--sidebar-width);
+}
+
+/* ------------------------------------------------
+   Header
+   ------------------------------------------------ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+  padding: 0 var(--space-lg);
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* ------------------------------------------------
+   Icon Button
+   ------------------------------------------------ */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.icon-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.icon-btn:active {
+  background-color: var(--bg-active);
+}
+
+/* ------------------------------------------------
+   Share Button
+   ------------------------------------------------ */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.share-btn:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+.share-btn:active {
+  background-color: var(--bg-active);
+}
+
+/* ------------------------------------------------
+   Sidebar
+   ------------------------------------------------ */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform var(--transition-normal);
+  z-index: 200;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.sidebar-title {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+
+.sidebar-footer {
+  padding: var(--space-md);
+  border-top: 1px solid var(--border-light);
+}
+
+/* ------------------------------------------------
+   Document List
+   ------------------------------------------------ */
+.doc-list {
+  list-style: none;
+}
+
+.doc-item {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-item:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.doc-item.active {
+  background-color: var(--bg-active);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.new-doc-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px dashed var(--border-medium);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.new-doc-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background-color: rgba(139, 115, 85, 0.05);
+}
+
+/* ------------------------------------------------
+   Editor Container
+   ------------------------------------------------ */
+.editor-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-lg);
+  overflow-y: auto;
+}
+
+.editor-wrapper {
+  width: 100%;
+  max-width: var(--editor-max-width);
+}
+
+/* ------------------------------------------------
+   TipTap Editor Styles
+   ------------------------------------------------ */
+.tiptap {
+  outline: none;
+  min-height: calc(100vh - var(--header-height) - var(--space-3xl));
+}
+
+.tiptap:focus {
+  outline: none;
+}
+
+/* Placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--text-placeholder);
+  font-style: italic;
+  pointer-events: none;
+  height: 0;
+  float: left;
+}
+
+/* Headings */
+.tiptap h1,
+.tiptap h2,
+.tiptap h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.tiptap h1:first-child,
+.tiptap h2:first-child,
+.tiptap h3:first-child {
+  margin-top: 0;
+}
+
+.tiptap h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+.tiptap h2 {
+  font-size: 1.625rem;
+}
+
+.tiptap h3 {
+  font-size: 1.25rem;
+}
+
+/* Paragraphs */
+.tiptap p {
+  margin-bottom: 1em;
+}
+
+.tiptap p:last-child {
+  margin-bottom: 0;
+}
+
+/* Bold & Italic */
+.tiptap strong {
+  font-weight: 600;
+}
+
+.tiptap em {
+  font-style: italic;
+}
+
+/* Strikethrough */
+.tiptap s {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Links */
+.tiptap a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tiptap a:hover {
+  color: var(--accent-hover);
+}
+
+/* Lists */
+.tiptap ul,
+.tiptap ol {
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.tiptap li {
+  margin-bottom: 0.25em;
+}
+
+.tiptap li p {
+  margin-bottom: 0.25em;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+}
+
+.tiptap ul ul,
+.tiptap ol ol,
+.tiptap ul ol,
+.tiptap ol ul {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Blockquote */
+.tiptap blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: var(--space-lg);
+  margin: 1.5em 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.tiptap blockquote p {
+  margin-bottom: 0.5em;
+}
+
+.tiptap blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Inline Code */
+.tiptap code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background-color: var(--bg-code);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: var(--accent-hover);
+}
+
+/* Code Block — Vercel-Style Light Theme */
+.tiptap pre {
+  font-family: "JetBrains Mono", var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  background-color: #f5f5f5;
+  color: #474646;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 1.5em 0;
+  overflow-x: auto;
+  border: 1px solid var(--border-light);
+}
+
+.tiptap pre code {
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+}
+
+/* ------------------------------------------------
+   Syntax Highlighting — Vercel-Style Token Colors
+   ------------------------------------------------ */
+
+/* Comments → Gray */
+.tiptap pre .hljs-comment,
+.tiptap pre .hljs-quote {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Keywords → Purple */
+.tiptap pre .hljs-keyword,
+.tiptap pre .hljs-selector-tag,
+.tiptap pre .hljs-meta-keyword,
+.tiptap pre .hljs-doctag,
+.tiptap pre .hljs-section {
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+/* Strings → Emerald Green */
+.tiptap pre .hljs-string,
+.tiptap pre .hljs-template-literal,
+.tiptap pre .hljs-addition,
+.tiptap pre .hljs-regexp,
+.tiptap pre .hljs-selector-attr,
+.tiptap pre .hljs-selector-pseudo {
+  color: #059669;
+}
+
+/* Numbers → Blue */
+.tiptap pre .hljs-number,
+.tiptap pre .hljs-literal,
+.tiptap pre .hljs-symbol,
+.tiptap pre .hljs-bullet {
+  color: #2563eb;
+}
+
+/* Functions → Dark Slate */
+.tiptap pre .hljs-title,
+.tiptap pre .hljs-title.function_,
+.tiptap pre .hljs-title.class_ {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+/* Variables → Purple */
+.tiptap pre .hljs-variable,
+.tiptap pre .hljs-template-variable,
+.tiptap pre .hljs-property {
+  color: #9333ea;
+}
+
+/* Attributes */
+.tiptap pre .hljs-attr,
+.tiptap pre .hljs-attribute {
+  color: #7c3aed;
+}
+
+/* Built-in Types → Pink */
+.tiptap pre .hljs-built_in,
+.tiptap pre .hljs-type,
+.tiptap pre .hljs-class {
+  color: #db2777;
+}
+
+/* Parameters */
+.tiptap pre .hljs-params {
+  color: #474646;
+}
+
+/* Operators & Punctuation */
+.tiptap pre .hljs-operator,
+.tiptap pre .hljs-punctuation {
+  color: #6b7280;
+}
+
+/* Meta & Tags */
+.tiptap pre .hljs-meta,
+.tiptap pre .hljs-tag {
+  color: #7c3aed;
+}
+
+/* Names in tags (HTML/XML) */
+.tiptap pre .hljs-name {
+  color: #db2777;
+}
+
+/* Deletion → Red with subtle background */
+.tiptap pre .hljs-deletion {
+  color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.1);
+}
+
+/* Link */
+.tiptap pre .hljs-link {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Horizontal Rule */
+.tiptap hr {
+  border: none;
+  border-top: 1px solid var(--border-medium);
+  margin: 2em 0;
+}
+
+/* Selection */
+.tiptap ::selection {
+  background-color: rgba(139, 115, 85, 0.2);
+}
+
+/* ------------------------------------------------
+   Scrollbar Styling
+   ------------------------------------------------ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border-medium);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-muted);
+}
+
+/* ------------------------------------------------
+   Tooltip (for Share button feedback)
+   ------------------------------------------------ */
+.tooltip {
+  position: fixed;
+  bottom: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  font-size: 0.875rem;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--transition-normal);
+  z-index: 1000;
+}
+
+.tooltip.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ------------------------------------------------
+   Export/Import Buttons Container
+   ------------------------------------------------ */
+.doc-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+/* Hidden file input */
+.hidden-input {
+  display: none;
 }
