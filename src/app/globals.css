@@ -3,7 +3,7 @@
    Design System & Global Styles
    ================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 
 /* ------------------------------------------------
    CSS Custom Properties
@@ -29,9 +29,9 @@
 
   /* Typography */
   --font-heading:
-    "Outfit", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body:
-    "Outfit", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", "Consolas", "Courier New", monospace;
 
   /* Spacing */
@@ -55,7 +55,9 @@
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(71, 70, 70, 0.05);
-  --shadow-md: 0 2px 8px rgba(71, 70, 70, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* ------------------------------------------------
@@ -200,7 +202,14 @@ body {
 }
 
 .sidebar.open {
-  transform: translateX(0);
+  transform: none;
+}
+
+/* Wrapper for doc item to handle absolute positioning of menu trigger */
+.doc-item-wrapper {
+  position: relative;
+  width: 100%;
+  display: block;
 }
 
 .sidebar-header {
@@ -781,7 +790,125 @@ body {
   border-color: var(--border-medium);
 }
 
+/* ------------------------------------------------
+   Sidebar Context Menu & Inputs
+   ------------------------------------------------ */
+
 /* Hidden file input */
 .hidden-input {
   display: none;
+}
+
+/* ------------------------------------------------
+   Sidebar Context Menu & Inputs
+   ------------------------------------------------ */
+
+/* Context Menu */
+.context-menu {
+  min-width: 180px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  animation: fadeIn 0.1s ease-out;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.context-menu-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.context-menu-item.delete {
+  color: #cf222e;
+}
+
+.context-menu-item.delete:hover {
+  background-color: #fff1f0;
+}
+
+.context-menu-divider {
+  height: 1px;
+  background-color: var(--border-light);
+  margin: 4px 0;
+}
+
+/* Sidebar Input (Rename) */
+.sidebar-input {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 0.9375rem;
+  font-family: var(--font-body);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  outline: none;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Sidebar Item Hover States */
+.doc-item-wrapper:hover .item-menu-trigger {
+  opacity: 1 !important;
+}
+
+.item-menu-trigger:hover {
+  background-color: var(--bg-hover) !important;
+  border-radius: 4px;
+  color: var(--text-primary) !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Dark Mode Context Menu Overrides */
+@media (prefers-color-scheme: dark) {
+  .context-menu {
+    background: #1f1f1f;
+    border-color: #30363d;
+  }
+  .context-menu-item.delete:hover {
+    background-color: #3c1618;
+    color: #ff7b72;
+  }
+  .sidebar-input {
+    background: #0f0f0f;
+    color: #e6edf3;
+    border-color: #a78bfa;
+  }
+}
+.dark .context-menu {
+  background: #1f1f1f;
+  border-color: #30363d;
+}
+.dark .context-menu-item.delete:hover {
+  background-color: #3c1618;
+  color: #ff7b72;
+}
+.dark .sidebar-input {
+  background: #0f0f0f;
+  color: #e6edf3;
+  border-color: #a78bfa;
 }

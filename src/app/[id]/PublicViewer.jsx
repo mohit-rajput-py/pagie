@@ -3,6 +3,32 @@
 import { useState, useEffect, useMemo } from "react";
 import { Moon, Sun } from "lucide-react";
 
+// Highlight.js for syntax highlighting
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import java from 'highlight.js/lib/languages/java';
+import xml from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import json from 'highlight.js/lib/languages/json';
+import bash from 'highlight.js/lib/languages/bash';
+import sql from 'highlight.js/lib/languages/sql';
+import markdownLang from 'highlight.js/lib/languages/markdown';
+
+// Register languages
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('xml', xml); // Handles HTML
+hljs.registerLanguage('html', xml);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('markdown', markdownLang);
+
 /**
  * Simple Markdown to HTML converter for rendering
  * Handles common markdown syntax
@@ -12,17 +38,43 @@ function parseMarkdown(markdown) {
   
   let html = markdown;
   
-  // Escape HTML entities first
+  // Code blocks - Process BEFORE generic escaping to avoid double escaping content
+  // We use a placeholder to avoid other regexes mess up the highlighted HTML
+  const codeBlocks = [];
+  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+    const language = lang && hljs.getLanguage(lang) ? lang : null;
+    let highlightedCode;
+    
+    try {
+      if (language) {
+        highlightedCode = hljs.highlight(code.trim(), { language }).value;
+      } else {
+        // Auto-detect or plain text if no language
+        highlightedCode = hljs.highlightAuto(code.trim()).value;
+      }
+    } catch (e) {
+      // Fallback
+      highlightedCode = code.trim()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+    codeBlocks.push(
+      `<pre class="github-code-block"><code class="hljs language-${language || 'text'}">${highlightedCode}</code></pre>`
+    );
+    return placeholder;
+  });
+  
+  // Escape HTML entities in the REST of the text
   html = html
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
   
-  // Code blocks (must be done before other processing)
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-    const language = lang || "text";
-    return `<pre><code class="language-${language}">${code.trim()}</code></pre>`;
-  });
+  // Restore code blocks (which are already escaped/highlighted)
+  html = html.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => codeBlocks[parseInt(index)]);
   
   // Inline code
   html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
@@ -121,7 +173,7 @@ export default function PublicViewer({ content, title, createdAt }) {
   
   return (
     <div 
-      className="public-viewer-page"
+      className={`public-viewer-page ${isDark ? "dark" : ""}`}
       style={{
         minHeight: "100vh",
         backgroundColor: isDark ? "#0f0f0f" : "#FAF9F6",
@@ -222,55 +274,7 @@ export default function PublicViewer({ content, title, createdAt }) {
             color: #e5e5e5 !important;
           }
           
-          .public-viewer-page .tiptap code {
-            background-color: #1f1f1f !important;
-            color: #a78bfa !important;
-          }
-          
-          .public-viewer-page .tiptap pre {
-            background-color: #1a1a1a !important;
-            border-color: #2a2a2a !important;
-            color: #e5e5e5 !important;
-          }
-          
-          .public-viewer-page .tiptap blockquote {
-            border-left-color: #4b5563 !important;
-            color: #9ca3af !important;
-          }
-          
-          .public-viewer-page .tiptap a {
-            color: #a78bfa !important;
-          }
-          
-          .public-viewer-page .tiptap hr {
-            border-color: #2a2a2a !important;
-          }
-          
-          /* Dark theme syntax highlighting */
-          .public-viewer-page .tiptap pre .hljs-comment,
-          .public-viewer-page .tiptap pre .hljs-quote {
-            color: #6b7280 !important;
-          }
-          
-          .public-viewer-page .tiptap pre .hljs-keyword {
-            color: #a78bfa !important;
-          }
-          
-          .public-viewer-page .tiptap pre .hljs-string {
-            color: #34d399 !important;
-          }
-          
-          .public-viewer-page .tiptap pre .hljs-number {
-            color: #60a5fa !important;
-          }
-          
-          .public-viewer-page .tiptap pre .hljs-title {
-            color: #f5f5f5 !important;
-          }
-          
-          .public-viewer-page .tiptap pre .hljs-built_in {
-            color: #f472b6 !important;
-          }
+          /* Code block highlighting is now handled by globals.css via .github-code-block class */
         `}</style>
       )}
     </div>

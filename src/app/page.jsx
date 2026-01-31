@@ -238,6 +238,61 @@ export default function Home() {
   }, []);
 
   /**
+   * Rename a document
+   */
+  const handleRenameDocument = useCallback((docId, newTitle) => {
+    setDocuments((prev) =>
+      prev.map((doc) => (doc.id === docId ? { ...doc, title: newTitle } : doc))
+    );
+  }, []);
+
+  /**
+   * Delete a document
+   */
+  const handleDeleteDocument = useCallback((docId) => {
+    setDocuments((prev) => {
+      const newDocs = prev.filter((doc) => doc.id !== docId);
+      // If we deleted the active doc, switch to the first available one
+      if (activeDocId === docId && newDocs.length > 0) {
+        setActiveDocId(newDocs[0].id);
+      } else if (newDocs.length === 0) {
+        // If no docs left, create a new untitled one
+        const newDoc = {
+          id: Date.now().toString(),
+          title: "Untitled",
+          content: "<p></p>",
+        };
+        setActiveDocId(newDoc.id);
+        return [newDoc];
+      }
+      return newDocs;
+    });
+  }, [activeDocId]);
+
+  /**
+   * Duplicate a document
+   */
+  const handleDuplicateDocument = useCallback((docId) => {
+    setDocuments((prev) => {
+      const docToClone = prev.find((doc) => doc.id === docId);
+      if (!docToClone) return prev;
+
+      const newDoc = {
+        ...docToClone,
+        id: Date.now().toString(), // Simple ID generation
+        title: `${docToClone.title} (Copy)`,
+      };
+      
+      // Insert after original
+      const index = prev.findIndex(d => d.id === docId);
+      const newDocs = [...prev];
+      newDocs.splice(index + 1, 0, newDoc);
+      
+      return newDocs;
+    });
+  }, []);
+
+  /**
    * Switch to a different document
    */
   const handleDocumentSelect = useCallback((docId) => {
@@ -352,6 +407,9 @@ export default function Home() {
         onDocumentSelect={handleDocumentSelect}
         onNewDocument={handleNewDocument}
         onImport={handleImportClick}
+        onRename={handleRenameDocument}
+        onDelete={handleDeleteDocument}
+        onDuplicate={handleDuplicateDocument}
       />
 
       {/* Main Content */}
