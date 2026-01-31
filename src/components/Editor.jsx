@@ -12,6 +12,17 @@ import { Download } from "lucide-react";
 // Create lowlight instance with common languages
 const lowlight = createLowlight(common);
 
+// Explicitly register languages (as requested)
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import java from 'highlight.js/lib/languages/java';
+
+lowlight.register('javascript', javascript);
+lowlight.register('typescript', typescript);
+lowlight.register('python', python);
+lowlight.register('java', java);
+
 /**
  * Convert TipTap HTML content to Markdown
  * This is a simplified converter for common elements
@@ -136,7 +147,7 @@ export default function Editor({ content, onContentChange, onExport }) {
         lowlight,
         defaultLanguage: "javascript",
         HTMLAttributes: {
-          class: "code-block",
+          class: "github-code-block",
         },
       }),
 

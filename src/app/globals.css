@@ -453,128 +453,228 @@ body {
   color: var(--accent-hover);
 }
 
-/* Code Block — Vercel-Style Light Theme */
-.tiptap pre {
-  font-family: "JetBrains Mono", var(--font-mono);
-  font-size: 14px;
-  line-height: 1.6;
-  background-color: #f5f5f5;
-  color: #474646;
+/* ================================================
+   GitHub Code Block Syntax Highlighting (Light + Dark)
+   Matched to primer/primitives
+   ================================================ */
+
+/* Base Code Block Container */
+.tiptap .github-code-block {
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  font-size: 13.6px;
+  line-height: 1.45;
   padding: 16px;
-  border-radius: 8px;
-  margin: 1.5em 0;
+  border-radius: 6px;
   overflow-x: auto;
-  border: 1px solid var(--border-light);
+  margin: 1.5em 0;
+
+  /* GitHub Light Default */
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  color: #1f2328;
 }
 
-.tiptap pre code {
+.tiptap .github-code-block code {
   font-family: inherit;
   font-size: inherit;
-  background: none;
+  background-color: transparent;
   padding: 0;
-  border-radius: 0;
   color: inherit;
+  border: 0;
+  white-space: pre;
 }
 
-/* ------------------------------------------------
-   Syntax Highlighting — Vercel-Style Token Colors
-   ------------------------------------------------ */
+/* ================================================
+   LIGHT THEME (Default)
+   ================================================ */
 
-/* Comments → Gray */
-.tiptap pre .hljs-comment,
-.tiptap pre .hljs-quote {
-  color: #6b7280;
-  font-style: italic;
+/* Keywords: function, class, if, return, const, var, let */
+.tiptap .github-code-block .hljs-keyword,
+.tiptap .github-code-block .hljs-selector-tag,
+.tiptap .github-code-block .hljs-built_in,
+.tiptap .github-code-block .hljs-operator {
+  color: #cf222e; /* Red */
 }
 
-/* Keywords → Purple */
-.tiptap pre .hljs-keyword,
-.tiptap pre .hljs-selector-tag,
-.tiptap pre .hljs-meta-keyword,
-.tiptap pre .hljs-doctag,
-.tiptap pre .hljs-section {
-  color: #7c3aed;
-  font-weight: 500;
+/* Entities: true, false, null */
+.tiptap .github-code-block .hljs-literal {
+  color: #0550ae; /* Blue */
 }
 
-/* Strings → Emerald Green */
-.tiptap pre .hljs-string,
-.tiptap pre .hljs-template-literal,
-.tiptap pre .hljs-addition,
-.tiptap pre .hljs-regexp,
-.tiptap pre .hljs-selector-attr,
-.tiptap pre .hljs-selector-pseudo {
-  color: #059669;
+/* Strings */
+.tiptap .github-code-block .hljs-string,
+.tiptap .github-code-block .hljs-template-literal,
+.tiptap .github-code-block .hljs-regexp {
+  color: #0a3069; /* Dark Blue */
 }
 
-/* Numbers → Blue */
-.tiptap pre .hljs-number,
-.tiptap pre .hljs-literal,
-.tiptap pre .hljs-symbol,
-.tiptap pre .hljs-bullet {
-  color: #2563eb;
+/* Functions & Methods */
+.tiptap .github-code-block .hljs-title,
+.tiptap .github-code-block .hljs-title.function_,
+.tiptap .github-code-block .hljs-attr {
+  color: #8250df; /* Purple */
 }
 
-/* Functions → Dark Slate */
-.tiptap pre .hljs-title,
-.tiptap pre .hljs-title.function_,
-.tiptap pre .hljs-title.class_ {
-  color: #0f172a;
-  font-weight: 500;
+/* Classes & Types */
+.tiptap .github-code-block .hljs-title.class_,
+.tiptap .github-code-block .hljs-type {
+  color: #953800; /* Orange */
 }
 
-/* Variables → Purple */
-.tiptap pre .hljs-variable,
-.tiptap pre .hljs-template-variable,
-.tiptap pre .hljs-property {
-  color: #9333ea;
+/* Variables */
+.tiptap .github-code-block .hljs-variable,
+.tiptap .github-code-block .hljs-template-variable,
+.tiptap .github-code-block .hljs-params,
+.tiptap .github-code-block .hljs-property {
+  color: #1f2328; /* Default Text (GitHub uses standard color for many vars, or orange for specialized) */
+}
+/* Specific overrides for variables often depend on language, GitHub simplifies some. 
+   But specific mapped tokens: */
+.tiptap .github-code-block .hljs-params {
+  color: #1f2328;
 }
 
-/* Attributes */
-.tiptap pre .hljs-attr,
-.tiptap pre .hljs-attribute {
-  color: #7c3aed;
+/* Comments */
+.tiptap .github-code-block .hljs-comment,
+.tiptap .github-code-block .hljs-quote {
+  color: #6e7781; /* Gray */
+  font-style: normal; /* GitHub code blocks are often normal, but sometimes italic. Let's stick to simple gray matching snapshot usually. */
 }
 
-/* Built-in Types → Pink */
-.tiptap pre .hljs-built_in,
-.tiptap pre .hljs-type,
-.tiptap pre .hljs-class {
-  color: #db2777;
+/* Numbers */
+.tiptap .github-code-block .hljs-number,
+.tiptap .github-code-block .hljs-symbol {
+  color: #0550ae; /* Blue */
 }
 
-/* Parameters */
-.tiptap pre .hljs-params {
-  color: #474646;
+/* HTML Tags */
+.tiptap .github-code-block .hljs-tag,
+.tiptap .github-code-block .hljs-name {
+  color: #116329; /* Green */
+}
+.tiptap .github-code-block .hljs-attr {
+  color: #116329; /* HTML attributes green often, but highlight.js maps differently. 
+                       In GitHub: attr names are purple (#8250df) in JS objects, Green in HTML.
+                       Let's stick to purple for generic attrs as per light mode. */
+  color: #7c3aed; /* Reverting to purple for general attr */
+}
+/* Let's fix HTML Tag Attributes to be Green like GitHub HTML */
+.tiptap .github-code-block .language-xml .hljs-attr,
+.tiptap .github-code-block .language-html .hljs-attr {
+  color: #116329;
 }
 
-/* Operators & Punctuation */
-.tiptap pre .hljs-operator,
-.tiptap pre .hljs-punctuation {
-  color: #6b7280;
+/* Punctuation */
+.tiptap .github-code-block .hljs-punctuation {
+  color: #1f2328;
 }
 
-/* Meta & Tags */
-.tiptap pre .hljs-meta,
-.tiptap pre .hljs-tag {
-  color: #7c3aed;
+/* Sections */
+.tiptap .github-code-block .hljs-section {
+  color: #0550ae;
+  font-weight: bold;
 }
 
-/* Names in tags (HTML/XML) */
-.tiptap pre .hljs-name {
-  color: #db2777;
+/* ================================================
+   DARK THEME
+   Supports .dark class or system preference
+   ================================================ */
+@media (prefers-color-scheme: dark) {
+  .tiptap .github-code-block {
+    background-color: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+  }
+  .tiptap .github-code-block .hljs-keyword,
+  .tiptap .github-code-block .hljs-selector-tag,
+  .tiptap .github-code-block .hljs-built_in,
+  .tiptap .github-code-block .hljs-operator {
+    color: #ff7b72;
+  }
+
+  .tiptap .github-code-block .hljs-literal {
+    color: #79c0ff;
+  }
+
+  .tiptap .github-code-block .hljs-string,
+  .tiptap .github-code-block .hljs-template-literal,
+  .tiptap .github-code-block .hljs-regexp {
+    color: #a5d6ff;
+  }
+
+  .tiptap .github-code-block .hljs-title,
+  .tiptap .github-code-block .hljs-title.function_,
+  .tiptap .github-code-block .hljs-attr {
+    color: #d2a8ff;
+  }
+
+  .tiptap .github-code-block .hljs-title.class_,
+  .tiptap .github-code-block .hljs-type {
+    color: #ffa657;
+  }
+
+  .tiptap .github-code-block .hljs-variable,
+  .tiptap .github-code-block .hljs-template-variable,
+  .tiptap .github-code-block .hljs-params,
+  .tiptap .github-code-block .hljs-property {
+    color: #e6edf3;
+  }
+
+  .tiptap .github-code-block .hljs-comment,
+  .tiptap .github-code-block .hljs-quote {
+    color: #8b949e;
+  }
+
+  .tiptap .github-code-block .hljs-number,
+  .tiptap .github-code-block .hljs-symbol {
+    color: #79c0ff;
+  }
+
+  .tiptap .github-code-block .hljs-tag,
+  .tiptap .github-code-block .hljs-name {
+    color: #7ee787;
+  }
+
+  .tiptap .github-code-block .language-xml .hljs-attr,
+  .tiptap .github-code-block .language-html .hljs-attr {
+    color: #7ee787;
+  }
+
+  .tiptap .github-code-block .hljs-punctuation {
+    color: #e6edf3;
+  }
+
+  .tiptap .github-code-block .hljs-section {
+    color: #79c0ff;
+  }
 }
 
-/* Deletion → Red with subtle background */
-.tiptap pre .hljs-deletion {
-  color: #dc2626;
-  background-color: rgba(220, 38, 38, 0.1);
+/* Force Dark Mode if parent has .dark class */
+.dark .tiptap .github-code-block {
+  background-color: #0d1117;
+  border-color: #30363d;
+  color: #e6edf3;
 }
-
-/* Link */
-.tiptap pre .hljs-link {
-  color: #2563eb;
-  text-decoration: underline;
+.dark .tiptap .github-code-block .hljs-keyword,
+.dark .tiptap .github-code-block .hljs-operator {
+  color: #ff7b72;
+}
+.dark .tiptap .github-code-block .hljs-string {
+  color: #a5d6ff;
+}
+.dark .tiptap .github-code-block .hljs-title.function_ {
+  color: #d2a8ff;
+}
+.dark .tiptap .github-code-block .hljs-comment {
+  color: #8b949e;
+}
+.dark .tiptap .github-code-block .hljs-number {
+  color: #79c0ff;
+}
+.dark .tiptap .github-code-block .hljs-class {
+  color: #ffa657;
 }
 
 /* Horizontal Rule */
@@ -587,6 +687,21 @@ body {
 /* Selection */
 .tiptap ::selection {
   background-color: rgba(139, 115, 85, 0.2);
+}
+
+/* Code Block Selection (GitHub Blue) */
+.tiptap .github-code-block ::selection {
+  background-color: #b3d7ff; /* GitHub Light Selection */
+}
+
+@media (prefers-color-scheme: dark) {
+  .tiptap .github-code-block ::selection {
+    background-color: #264f78; /* GitHub Dark Selection */
+  }
+}
+
+.dark .tiptap .github-code-block ::selection {
+  background-color: #264f78;
 }
 
 /* ------------------------------------------------
