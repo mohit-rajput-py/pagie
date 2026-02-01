@@ -2,135 +2,30 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Typography from "@tiptap/extension-typography";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { common, createLowlight } from "lowlight";
+import { marked } from "marked";
 
-// Highlight.js for syntax highlighting
-import hljs from 'highlight.js/lib/core';
+// Explicitly register languages (same as Editor)
 import javascript from 'highlight.js/lib/languages/javascript';
 import typescript from 'highlight.js/lib/languages/typescript';
 import python from 'highlight.js/lib/languages/python';
 import java from 'highlight.js/lib/languages/java';
-import xml from 'highlight.js/lib/languages/xml';
-import css from 'highlight.js/lib/languages/css';
-import json from 'highlight.js/lib/languages/json';
-import bash from 'highlight.js/lib/languages/bash';
-import sql from 'highlight.js/lib/languages/sql';
-import markdownLang from 'highlight.js/lib/languages/markdown';
 
-// Register languages
-hljs.registerLanguage('javascript', javascript);
-hljs.registerLanguage('typescript', typescript);
-hljs.registerLanguage('python', python);
-hljs.registerLanguage('java', java);
-hljs.registerLanguage('xml', xml); // Handles HTML
-hljs.registerLanguage('html', xml);
-hljs.registerLanguage('css', css);
-hljs.registerLanguage('json', json);
-hljs.registerLanguage('bash', bash);
-hljs.registerLanguage('sql', sql);
-hljs.registerLanguage('markdown', markdownLang);
+const lowlight = createLowlight(common);
 
-/**
- * Simple Markdown to HTML converter for rendering
- * Handles common markdown syntax
- */
-function parseMarkdown(markdown) {
-  if (!markdown) return "";
-  
-  let html = markdown;
-  
-  // Code blocks - Process BEFORE generic escaping to avoid double escaping content
-  // We use a placeholder to avoid other regexes mess up the highlighted HTML
-  const codeBlocks = [];
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-    const language = lang && hljs.getLanguage(lang) ? lang : null;
-    let highlightedCode;
-    
-    try {
-      if (language) {
-        highlightedCode = hljs.highlight(code.trim(), { language }).value;
-      } else {
-        // Auto-detect or plain text if no language
-        highlightedCode = hljs.highlightAuto(code.trim()).value;
-      }
-    } catch (e) {
-      // Fallback
-      highlightedCode = code.trim()
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    }
-
-    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
-    codeBlocks.push(
-      `<pre class="github-code-block"><code class="hljs language-${language || 'text'}">${highlightedCode}</code></pre>`
-    );
-    return placeholder;
-  });
-  
-  // Escape HTML entities in the REST of the text
-  html = html
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  
-  // Restore code blocks (which are already escaped/highlighted)
-  html = html.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => codeBlocks[parseInt(index)]);
-  
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-  
-  // Headings
-  html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-  html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-  html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
-  
-  // Bold and italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-  html = html.replace(/~~(.+?)~~/g, "<s>$1</s>");
-  
-  // Blockquotes
-  html = html.replace(/^&gt; (.+)$/gm, "<blockquote><p>$1</p></blockquote>");
-  
-  // Unordered lists
-  html = html.replace(/^- (.+)$/gm, "<li>$1</li>");
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
-  
-  // Ordered lists
-  html = html.replace(/^\d+\. (.+)$/gm, "<li>$1</li>");
-  
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  
-  // Horizontal rules
-  html = html.replace(/^---$/gm, "<hr>");
-  
-  // Paragraphs (wrap remaining text)
-  html = html
-    .split("\n\n")
-    .map((block) => {
-      block = block.trim();
-      if (!block) return "";
-      if (block.startsWith("<h") || 
-          block.startsWith("<ul") || 
-          block.startsWith("<ol") ||
-          block.startsWith("<blockquote") ||
-          block.startsWith("<pre") ||
-          block.startsWith("<hr")) {
-        return block;
-      }
-      return `<p>${block.replace(/\n/g, "<br>")}</p>`;
-    })
-    .join("\n");
-  
-  return html;
-}
+lowlight.register('javascript', javascript);
+lowlight.register('typescript', typescript);
+lowlight.register('python', python);
+lowlight.register('java', java);
 
 /**
  * PublicViewer Component
  * Read-only markdown viewer with theme toggle
- * Uses same styling as the main editor
+ * Uses TipTap in read-only mode for consistent rendering with Editor
  */
 export default function PublicViewer({ content, title, createdAt }) {
   const [theme, setTheme] = useState("light");
@@ -151,9 +46,64 @@ export default function PublicViewer({ content, title, createdAt }) {
     setTheme(newTheme);
     localStorage.setItem("pagie-theme", newTheme);
   };
-  
-  // Parse markdown to HTML
-  const htmlContent = useMemo(() => parseMarkdown(content), [content]);
+
+  // Parse markdown to HTML using marked
+  const htmlContent = useMemo(() => {
+    return marked.parse(content || "");
+  }, [content]);
+
+  // Initialize TipTap editor in read-only mode
+  const editor = useEditor({
+    editable: false,
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+        // Disable default code block, we use CodeBlockLowlight instead
+        codeBlock: false,
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+      // Syntax-highlighted code blocks
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: "javascript",
+        HTMLAttributes: {
+          class: "github-code-block",
+        },
+      }),
+      Typography,
+    ],
+    content: htmlContent, 
+    editorProps: {
+      attributes: {
+        class: "tiptap",
+        spellcheck: "false",
+      },
+    },
+    // Prevent SSR issues
+    immediatelyRender: false,
+  });
+
+  // Update editor content if it changes externally
+  // although mostly PublicViewer receives content once
+  useEffect(() => {
+    if (editor && htmlContent && htmlContent !== editor.getHTML()) {
+       // Only set content if it's materially different to avoid cursor jumps (though this is read only)
+       // TipTap's setContent can be heavy, but necessary if content prop updates
+       // Check if editor is empty or content changed significantly
+       if (editor.isEmpty || editor.getHTML() !== htmlContent) {
+           editor.commands.setContent(htmlContent);
+       }
+    }
+  }, [htmlContent, editor]);
   
   // Format date
   const formattedDate = useMemo(() => {
@@ -244,24 +194,16 @@ export default function PublicViewer({ content, title, createdAt }) {
             </time>
           </div>
           
-          {/* Rendered Markdown - Uses .tiptap class for same styling */}
-          <div
-            className="tiptap"
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-            style={isDark ? {
-              // Dark theme overrides
-              "--text-primary": "#f5f5f5",
-              "--text-secondary": "#9ca3af",
-              "--bg-code": "#1f1f1f",
-              "--accent": "#a78bfa",
-              "--border-light": "#2a2a2a",
-            } : {}}
-          />
+          {/* Rendered Markdown - TipTap ReadOnly */}
+          <div className="tiptap-renderer-wrapper">
+             <EditorContent editor={editor} />
+          </div>
+
         </div>
       </div>
 
-      {/* Dark theme styles */}
-      {isDark && (
+       {/* Dark theme styles */}
+       {isDark && (
         <style jsx global>{`
           .public-viewer-page .tiptap h1,
           .public-viewer-page .tiptap h2,
@@ -273,8 +215,6 @@ export default function PublicViewer({ content, title, createdAt }) {
           .public-viewer-page .tiptap li {
             color: #e5e5e5 !important;
           }
-          
-          /* Code block highlighting is now handled by globals.css via .github-code-block class */
         `}</style>
       )}
     </div>
