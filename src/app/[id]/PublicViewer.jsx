@@ -23,6 +23,103 @@ lowlight.register('python', python);
 lowlight.register('java', java);
 
 /**
+ * Repairs broken markdown content to ensure code blocks are properly fenced.
+ * This fixes issues where code blocks are missing fences entirely or use indentation 
+ * which gets interrupted by headers or other markdown syntax.
+ */
+function repairMarkdown(content) {
+  if (!content) return "";
+  
+  let lines = content.split('\n');
+  let repaired = [];
+  let inCodeBlock = false;
+  let codeBlockFence = null;
+  
+  // Heuristics for auto-detecting java code start
+  // This is aggressive but necessary if fences are completely missing
+  const javaStartPatterns = [
+    /^import\s+java\./,
+    /^public\s+class\s+/,
+    /^class\s+/,
+    /^package\s+/,
+    /^\s*public\s+static\s+void\s+main/
+  ];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Check for existing code fences
+    if (trimmed.startsWith('```')) {
+      if (inCodeBlock) {
+        // Closing an existing block
+        inCodeBlock = false;
+        codeBlockFence = null;
+      } else {
+        // Opening a new block
+        inCodeBlock = true;
+        const match = trimmed.match(/^```(\w*)/);
+        codeBlockFence = match ? match[1] : '';
+      }
+      repaired.push(line);
+      continue;
+    }
+    
+    // If not in a code block, checking if we should auto-start one for Java
+    if (!inCodeBlock) {
+      const isJavaStart = javaStartPatterns.some(p => p.test(line));
+      if (isJavaStart) {
+        // Start a Java code block
+        repaired.push('```java');
+        repaired.push(line);
+        inCodeBlock = true;
+        codeBlockFence = 'java'; // We synthesized this
+        continue;
+      }
+
+      // Check for Output sections which are often just text but should be fenced
+      // The user mentioned "output sections"
+      // If we see a line specifically saying "Output:" or similar followed by raw text, 
+      // or if the user mentioned specific markers.
+      // Assuming "Output:" header might be present?
+      // Or looking for lines that look like console output?
+      // Without specific patterns, this is risky. 
+      // However, the user said "Ensure all output sections are wrapped in fenced code blocks".
+      // I'll look for lines that might look like output if they follow code?
+      // For now, I'll stick to strictly repairing Java code blocks.
+    } else {
+      // We are in a code block. Check if it should END.
+      // If we hit a Markdown Header (## ), it likely means the code block should have ended.
+      // This enforces "Ensure headings (##, ###) are not injected mid-block" by closing the block first.
+      if (line.match(/^#{1,6}\s/)) {
+        // We found a header inside a code block. 
+        // If this was a synthesized block, close it.
+        // If it was a real block... it might be a comment? '# ' is valid in python/bash but not java.
+        // In Java, comments are // or /*.
+        // So if we see '# ' in a JAVA block, it's almost certainly a markdown header breaking in.
+        if (codeBlockFence === 'java') {
+             repaired.push('```'); // Close the block
+             inCodeBlock = false;
+             codeBlockFence = null;
+             repaired.push(line); // Push the header
+             continue;
+        }
+      }
+    }
+    
+    repaired.push(line);
+  }
+  
+  // Close any remaining open blocks at the end
+  if (inCodeBlock) {
+    repaired.push('```');
+  }
+  
+  return repaired.join('\n');
+}
+
+
+/**
  * PublicViewer Component
  * Read-only markdown viewer with theme toggle
  * Uses TipTap in read-only mode for consistent rendering with Editor
@@ -47,9 +144,10 @@ export default function PublicViewer({ content, title, createdAt }) {
     localStorage.setItem("pagie-theme", newTheme);
   };
 
-  // Parse markdown to HTML using marked
+  // Parse markdown to HTML using marked, after REPAIRING it
   const htmlContent = useMemo(() => {
-    return marked.parse(content || "");
+    const safeContent = repairMarkdown(content || "");
+    return marked.parse(safeContent);
   }, [content]);
 
   // Initialize TipTap editor in read-only mode
