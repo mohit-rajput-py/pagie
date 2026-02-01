@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Moon, Sun } from "lucide-react";
 import Editor from "@/components/Editor";
+import Image from "next/image";
 
 /**
  * PublicViewer Component
@@ -64,7 +65,7 @@ export default function PublicViewer({ content, title, createdAt }) {
         aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
         title={`Switch to ${isDark ? "light" : "dark"} theme`}
         style={{
-          position: "fixed",
+          position: "absolute",
           top: "24px",
           right: "24px",
           zIndex: 100,
@@ -135,7 +136,34 @@ export default function PublicViewer({ content, title, createdAt }) {
 
         </div>
       </div>
-
+            { !isDark && <p
+                    style={{
+                      fontSize: '0.875rem',        // text-sm
+                      color: '#000',            // text-muted
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                    }}
+                  >
+                    Built With
+                    ❤️
+                    Using
+                    <a
+                      href="https://nextjs.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center' }}
+                    >
+                      <Image
+                        src="/next.svg"
+                        alt="Next.js logo"
+                        style={{ marginLeft: '0.25rem' }}
+                        width={46}
+                        height={28}
+                      />
+                    </a>
+                  </p>}
        {/* Dark theme styles */}
        {isDark && (
         <style jsx global>{`
