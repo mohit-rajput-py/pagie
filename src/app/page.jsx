@@ -82,148 +82,7 @@ print([fibonacci(i) for i in range(10)])</code></pre>`,
   },
 ];
 
-/**
- * Convert HTML content to Markdown
- * Used for sharing documents as Markdown
- */
-function htmlToMarkdown(html) {
-  if (!html) return "";
-
-  let markdown = html;
-
-  // Convert headings
-  markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "# $1\n\n");
-  markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "## $1\n\n");
-  markdown = markdown.replace(/<h3[^>]*>(.*?)<\/h3>/gi, "### $1\n\n");
-
-  // Convert bold and italic
-  markdown = markdown.replace(/<strong[^>]*>(.*?)<\/strong>/gi, "**$1**");
-  markdown = markdown.replace(/<em[^>]*>(.*?)<\/em>/gi, "*$1*");
-  markdown = markdown.replace(/<s[^>]*>(.*?)<\/s>/gi, "~~$1~~");
-
-  // Convert inline code
-  markdown = markdown.replace(/<code[^>]*>(.*?)<\/code>/gi, "`$1`");
-
-  // Convert code blocks
-  markdown = markdown.replace(
-    /<pre[^>]*><code[^>]*class="language-(\w+)"[^>]*>([\s\S]*?)<\/code><\/pre>/gi,
-    "```$1\n$2\n```\n\n"
-  );
-  markdown = markdown.replace(
-    /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi,
-    "```\n$1\n```\n\n"
-  );
-
-  // Convert blockquotes
-  markdown = markdown.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (match, content) => {
-    const lines = content.replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n").split("\n");
-    return lines.map((line) => `> ${line}`).join("\n") + "\n\n";
-  });
-
-  // Convert unordered lists
-  markdown = markdown.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (match, content) => {
-    return content.replace(/<li[^>]*><p[^>]*>(.*?)<\/p><\/li>/gi, "- $1\n")
-                  .replace(/<li[^>]*>(.*?)<\/li>/gi, "- $1\n") + "\n";
-  });
-
-  // Convert ordered lists
-  let olCounter = 0;
-  markdown = markdown.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (match, content) => {
-    olCounter = 0;
-    return content.replace(/<li[^>]*><p[^>]*>(.*?)<\/p><\/li>/gi, () => {
-      olCounter++;
-      return `${olCounter}. $1\n`;
-    }).replace(/<li[^>]*>(.*?)<\/li>/gi, (m, c) => {
-      olCounter++;
-      return `${olCounter}. ${c}\n`;
-    }) + "\n";
-  });
-
-  // Convert paragraphs
-  markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n\n");
-
-  // Convert links
-  markdown = markdown.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, "[$2]($1)");
-
-  // Convert horizontal rules
-  markdown = markdown.replace(/<hr[^>]*>/gi, "---\n\n");
-
-  // Clean up HTML entities
-  markdown = markdown.replace(/&lt;/g, "<");
-  markdown = markdown.replace(/&gt;/g, ">");
-  markdown = markdown.replace(/&amp;/g, "&");
-  markdown = markdown.replace(/&nbsp;/g, " ");
-
-  // Remove any remaining HTML tags
-  markdown = markdown.replace(/<[^>]*>/g, "");
-
-  // Clean up excessive newlines
-  markdown = markdown.replace(/\n{3,}/g, "\n\n");
-
-  return markdown.trim();
-}
-
-/**
- * Parse Markdown to HTML for Import
- * Converts incoming markdown structure to HTML that TipTap can ingest
- */
-function parseMarkdownForImport(markdown) {
-  if (!markdown) return "";
-  
-  let html = markdown.replace(/\r\n/g, "\n");
-  
-  // Code Blocks (```lang ... ```)
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-    const language = lang || 'text';
-    const escapedCode = code
-       .replace(/&/g, "&amp;")
-       .replace(/</g, "&lt;")
-       .replace(/>/g, "&gt;");
-    return `<pre><code class="language-${language}">${escapedCode.trim()}</code></pre>`;
-  });
-  
-  // Headings
-  html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-  html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-  html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
-  
-  // Bold and italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-  html = html.replace(/~~(.+?)~~/g, "<s>$1</s>");
-  
-  // Blockquotes
-  html = html.replace(/^&gt; (.+)$/gm, "<blockquote><p>$1</p></blockquote>");
-  
-  // Unordered lists
-  html = html.replace(/^- (.+)$/gm, "<li>$1</li>");
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
-  
-  // Ordered lists
-  html = html.replace(/^\d+\. (.+)$/gm, "<li>$1</li>");
-  
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-  
-  // Horizontal rules
-  html = html.replace(/^---$/gm, "<hr>");
-  
-  // Paragraphs
-  html = html
-    .split("\n\n")
-    .map((block) => {
-      block = block.trim();
-      if (!block) return "";
-      if (block.match(/^<(h\d|pre|ul|ol|blockquote|hr)/)) {
-        return block;
-      }
-      return `<p>${block.replace(/\n/g, "<br>")}</p>`;
-    })
-    .join("\n");
-    
-  return html;
-}
+import { htmlToMarkdown, markdownToHtml } from "@/lib/markdownUtils";
 
 /**
  * Main Page Component
@@ -448,7 +307,7 @@ export default function Home() {
         const newDoc = {
           id: Date.now().toString(),
           title: fileName,
-          content: parseMarkdownForImport(content),
+          content: markdownToHtml(content),
         };
         setDocuments((prev) => [newDoc, ...prev]);
         setActiveDocId(newDoc.id);

@@ -5,6 +5,10 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { Table } from '@tiptap/extension-table'
+import { TableCell } from '@tiptap/extension-table-cell'
+import { TableHeader } from '@tiptap/extension-table-header'
+import { TableRow } from '@tiptap/extension-table-row'
 import { common, createLowlight } from "lowlight";
 import { useEffect, useCallback } from "react";
 import { Download } from "lucide-react";
@@ -23,89 +27,7 @@ lowlight.register('typescript', typescript);
 lowlight.register('python', python);
 lowlight.register('java', java);
 
-/**
- * Convert TipTap HTML content to Markdown
- * This is a simplified converter for common elements
- * 
- * @param {string} html - HTML content from TipTap
- * @returns {string} Markdown representation
- */
-function htmlToMarkdown(html) {
-  if (!html) return "";
-
-  let markdown = html;
-
-  // Convert headings
-  markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "# $1\n\n");
-  markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "## $1\n\n");
-  markdown = markdown.replace(/<h3[^>]*>(.*?)<\/h3>/gi, "### $1\n\n");
-
-  // Convert bold and italic
-  markdown = markdown.replace(/<strong[^>]*>(.*?)<\/strong>/gi, "**$1**");
-  markdown = markdown.replace(/<em[^>]*>(.*?)<\/em>/gi, "*$1*");
-  markdown = markdown.replace(/<s[^>]*>(.*?)<\/s>/gi, "~~$1~~");
-
-  // Convert inline code
-  markdown = markdown.replace(/<code[^>]*>(.*?)<\/code>/gi, "`$1`");
-
-  // Convert code blocks
-  markdown = markdown.replace(
-    /<pre[^>]*><code[^>]*class="language-(\w+)"[^>]*>([\s\S]*?)<\/code><\/pre>/gi,
-    "```$1\n$2\n```\n\n"
-  );
-  markdown = markdown.replace(
-    /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi,
-    "```\n$1\n```\n\n"
-  );
-
-  // Convert blockquotes
-  markdown = markdown.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (match, content) => {
-    const lines = content.replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n").split("\n");
-    return lines.map((line) => `> ${line}`).join("\n") + "\n\n";
-  });
-
-  // Convert unordered lists
-  markdown = markdown.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (match, content) => {
-    return content.replace(/<li[^>]*><p[^>]*>(.*?)<\/p><\/li>/gi, "- $1\n")
-                  .replace(/<li[^>]*>(.*?)<\/li>/gi, "- $1\n") + "\n";
-  });
-
-  // Convert ordered lists
-  let olCounter = 0;
-  markdown = markdown.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (match, content) => {
-    olCounter = 0;
-    return content.replace(/<li[^>]*><p[^>]*>(.*?)<\/p><\/li>/gi, () => {
-      olCounter++;
-      return `${olCounter}. $1\n`;
-    }).replace(/<li[^>]*>(.*?)<\/li>/gi, (m, c) => {
-      olCounter++;
-      return `${olCounter}. ${c}\n`;
-    }) + "\n";
-  });
-
-  // Convert paragraphs
-  markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n\n");
-
-  // Convert links
-  markdown = markdown.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, "[$2]($1)");
-
-  // Convert horizontal rules
-  markdown = markdown.replace(/<hr[^>]*>/gi, "---\n\n");
-
-  // Clean up HTML entities
-  markdown = markdown.replace(/&lt;/g, "<");
-  markdown = markdown.replace(/&gt;/g, ">");
-  markdown = markdown.replace(/&amp;/g, "&");
-  markdown = markdown.replace(/&nbsp;/g, " ");
-
-  // Remove any remaining HTML tags
-  markdown = markdown.replace(/<[^>]*>/g, "");
-
-  // Clean up excessive newlines
-  markdown = markdown.replace(/\n{3,}/g, "\n\n");
-
-  return markdown.trim();
-}
+import { htmlToMarkdown } from "@/lib/markdownUtils";
 
 /**
  * Editor Component
@@ -151,6 +73,14 @@ export default function Editor({ content, onContentChange, onExport, readOnly = 
           class: "github-code-block",
         },
       }),
+
+      // Tables
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
 
       // Placeholder text when editor is empty (only in editable mode)
       Placeholder.configure({
