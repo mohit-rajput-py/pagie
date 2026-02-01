@@ -116,9 +116,10 @@ function htmlToMarkdown(html) {
  * @param {Function} props.onContentChange - Callback when content changes
  * @param {Function} props.onExport - Callback to export as Markdown
  */
-export default function Editor({ content, onContentChange, onExport }) {
+export default function Editor({ content, onContentChange, onExport, readOnly = false }) {
   // Initialize TipTap editor with extensions
   const editor = useEditor({
+    editable: !readOnly,
     extensions: [
       // StarterKit includes common extensions with Markdown-like input rules
       StarterKit.configure({
@@ -151,10 +152,11 @@ export default function Editor({ content, onContentChange, onExport }) {
         },
       }),
 
-      // Placeholder text when editor is empty
+      // Placeholder text when editor is empty (only in editable mode)
       Placeholder.configure({
         placeholder: "Start writing...",
         emptyEditorClass: "is-editor-empty",
+        showOnlyWhenEditable: true,
       }),
 
       // Smart typography (quotes, dashes, etc.)
@@ -164,14 +166,17 @@ export default function Editor({ content, onContentChange, onExport }) {
     editorProps: {
       attributes: {
         class: "tiptap",
-        spellcheck: "true",
+        spellcheck: !readOnly ? "true" : "false",
       },
     },
     // Handle content updates
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      const text = editor.getText();
-      onContentChange(html, text);
+      // Only trigger change if editable
+      if (!readOnly && onContentChange) {
+        const html = editor.getHTML();
+        const text = editor.getText();
+        onContentChange(html, text);
+      }
     },
     // Prevent SSR issues
     immediatelyRender: false,
