@@ -378,8 +378,8 @@ export default function Home() {
     setIsSharing(true);
     
     try {
-      // Convert HTML to Markdown for storage
-      const markdown = htmlToMarkdown(activeDocument.content);
+      // Send raw HTML content directly to API (No Markdown conversion)
+      const contentToShare = activeDocument.content;
       
       // Send to API
       const response = await fetch("/api/share", {
@@ -388,7 +388,7 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          content: markdown,
+          content: contentToShare,
           title: activeDocument.title,
         }),
       });
