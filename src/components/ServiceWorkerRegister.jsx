@@ -11,7 +11,7 @@ export default function ServiceWorkerRegister() {
     if (
       typeof window !== "undefined" &&
       "serviceWorker" in navigator &&
-      window.location.protocol === "https:" // Only works on HTTPS (and localhost)
+      window.location.protocol === "https:"
     ) {
       navigator.serviceWorker
         .register("/sw.js")

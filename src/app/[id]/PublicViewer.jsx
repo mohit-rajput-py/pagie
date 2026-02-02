@@ -1,23 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { Moon, Sun } from "lucide-react";
 import Editor from "@/components/Editor";
 import Image from "next/image";
-import PublicHeader from "@/components/PublicHeader";
-import PublicSidebar from "@/components/PublicSidebar";
 
-/**
- * PublicViewer Component
- * Read-only viewer for shared documents.
- * 
- * Updated to use the shared Editor component in read-only mode.
- * This guarantees exact parity with the editor's rendering, syntax highlighting,
- * and typography, as it runs the exact same Tiptap pipeline.
- */
 export default function PublicViewer({ content, title, createdAt }) {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Load theme from localStorage on mount
   useEffect(() => {
@@ -56,25 +46,36 @@ export default function PublicViewer({ content, title, createdAt }) {
       className={`public-viewer-page ${isDark ? "dark" : ""}`}
       style={{
         minHeight: "100vh",
-        backgroundColor: isDark ? "#1f1f1f" : "#FAF9F6",
+        backgroundColor: isDark ? "#0f0f0f" : "#FAF9F6",
         color: isDark ? "#e5e5e5" : "#474646",
         transition: "background-color 0.3s ease, color 0.3s ease",
-        display: "flex",
-        flexDirection: "column",
       }}
     >
-      <PublicSidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-        theme={theme} 
-        toggleTheme={toggleTheme} 
-      />
-
-      <PublicHeader 
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        onSearch={() => console.log("Search clicked")}
-        isDark={isDark}
-      />
+      {/* Theme Toggle Button - Floating Right */}
+      <button
+        onClick={toggleTheme}
+        aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
+        title={`Switch to ${isDark ? "light" : "dark"} theme`}
+        style={{
+          position: "absolute",
+          top: "24px",
+          right: "24px",
+          zIndex: 100,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "44px",
+          height: "44px",
+          border: "none",
+          borderRadius: "50%",
+          cursor: "pointer",
+          transition: "all 0.2s ease",
+          backgroundColor: isDark ? "#1f1f1f" : "#f0efeb",
+          color: isDark ? "#e5e5e5" : "#474646",
+        }}
+      >
+        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
       
       {/* Content Container - Same as editor-container */}
       <div 
@@ -127,7 +128,34 @@ export default function PublicViewer({ content, title, createdAt }) {
 
         </div>
       </div>
-            
+            { !isDark && <p
+                    style={{
+                      fontSize: '0.875rem',        // text-sm
+                      color: '#000',            // text-muted
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                    }}
+                  >
+                    Built With
+                    ❤️
+                    Using
+                    <a
+                      href="https://nextjs.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center' }}
+                    >
+                      <Image
+                        src="/next.svg"
+                        alt="Next.js logo"
+                        style={{ marginLeft: '0.25rem' }}
+                        width={46}
+                        height={28}
+                      />
+                    </a>
+                  </p>}
        {/* Dark theme styles */}
        {isDark && (
         <style jsx global>{`

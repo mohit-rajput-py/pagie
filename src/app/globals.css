@@ -592,7 +592,7 @@ body {
    ================================================ */
 @media (prefers-color-scheme: dark) {
   .tiptap .github-code-block {
-    background-color: #0d1117;
+    background-color: #0f0f0f;
     border-color: #30363d;
     color: #e6edf3;
   }
@@ -601,6 +601,26 @@ body {
   .tiptap .github-code-block .hljs-built_in,
   .tiptap .github-code-block .hljs-operator {
     color: #ff7b72;
+  }
+  /* scrollbar size */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  /* track */
+  ::-webkit-scrollbar-track {
+    background: #0f172a; /* very dark, not pure black */
+  }
+
+  /* thumb */
+  ::-webkit-scrollbar-thumb {
+    background-color: #334155; /* muted slate */
+    border-radius: 6px;
+  }
+
+  /* hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #475569;
   }
 
   .tiptap .github-code-block .hljs-literal {
@@ -662,7 +682,7 @@ body {
 
 /* Force Dark Mode if parent has .dark class */
 .dark .tiptap .github-code-block {
-  background-color: #0d1117;
+  background-color: #0f0f0f;
   border-color: #30363d;
   color: #e6edf3;
 }
@@ -963,4 +983,22 @@ body {
 .tableWrapper {
   margin: 1.5rem 0;
   overflow-x: auto;
+}
+
+/* Dark Mode Scrollbar Overrides for manual toggle */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1f1f1f;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 6px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
 }
