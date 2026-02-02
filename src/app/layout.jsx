@@ -1,23 +1,21 @@
 import "./globals.css";
-import Footer from "@/components/Footer";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 /**
  * Root Layout for Pagie
  * Loads Google Fonts and wraps the app
  */
 export const metadata = {
-  title: "Pagie — Markdown Editor",
-  description: "A Notion-like WYSIWYG Markdown editor",
+  title: "Pagie — Distraction-free Markdown Editor",
+  description: "A beautiful, minimalist markdown editor.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <main>{children}</main>
-        <footer>
-          {/* <Footer /> */}
-        </footer>
+        <ServiceWorkerRegister />
+        {children}
       </body>
     </html>
   );
