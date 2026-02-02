@@ -2,17 +2,40 @@ import { notFound } from "next/navigation";
 import dbConnect from "@/lib/mongodb";
 import SharedDocument from "@/models/SharedDocument";
 import PublicViewer from "./PublicViewer";
+import { cache } from "react";
+
+// ISR: Cache this page for 1 year (31536000 seconds).
+// This serves the static HTML from the cache on subsequent requests.
+// On-demand revalidation can still be used to update it manually if needed.
+export const revalidate = false;
+export const dynamic = "force-static";
+// Deduplicate requests using React cache
+const getSharedDocument = cache(async (id) => {
+  await dbConnect();
+  
+  // Validate ObjectId format
+  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    return null;
+  }
+
+  const doc = await SharedDocument.findById(id);
+  
+  if (!doc || !doc.isPublic) {
+    return null;
+  }
+  
+  return doc;
+});
 
 /**
  * Generate metadata for the shared document page
  */
 export async function generateMetadata({ params }) {
   try {
-    await dbConnect();
     const { id } = await params;
-    const doc = await SharedDocument.findById(id);
+    const doc = await getSharedDocument(id);
     
-    if (!doc || !doc.isPublic) {
+    if (!doc) {
       return { title: "Document Not Found — Pagie" };
     }
     
@@ -31,18 +54,10 @@ export async function generateMetadata({ params }) {
  */
 export default async function PublicPage({ params }) {
   try {
-    await dbConnect();
     const { id } = await params;
+    const doc = await getSharedDocument(id);
     
-    // Validate ObjectId format
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-      notFound();
-    }
-    
-    const doc = await SharedDocument.findById(id);
-    
-    // Check if document exists and is public
-    if (!doc || !doc.isPublic) {
+    if (!doc) {
       notFound();
     }
     
