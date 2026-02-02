@@ -23,6 +23,11 @@ const SharedDocumentSchema = new mongoose.Schema(
             type: String,
             default: "Untitled",
         },
+        // URL-safe slug generated from title
+        slug: {
+            type: String,
+            required: true,
+        },
     },
     {
         // Automatically add createdAt and updatedAt

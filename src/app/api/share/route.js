@@ -35,10 +35,17 @@ export async function POST(request) {
             );
         }
 
+        // Create URL-safe slug
+        const slug = (title || "Untitled")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)+/g, "");
+
         // Create new shared document
         const doc = await SharedDocument.create({
             content,
             title: title || "Untitled",
+            slug,
             isPublic: true,
         });
 
@@ -50,7 +57,7 @@ export async function POST(request) {
         return NextResponse.json({
             success: true,
             id: doc._id.toString(),
-            url: `${baseUrl}/${doc._id.toString()}`,
+            url: `${baseUrl}/${slug}-${doc._id.toString()}`,
         });
     } catch (error) {
         console.error("Share API error:", error);
