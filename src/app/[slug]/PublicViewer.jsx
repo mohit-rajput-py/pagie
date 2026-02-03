@@ -127,6 +127,45 @@ export default function PublicViewer({ content, title, createdAt }) {
 
         </div>
       </div>
+      <div
+          style={{
+            padding: "12px",
+            paddingTop: "16px",
+            textAlign: "center",
+            fontSize: "0.875rem",
+            borderTop: `1px solid ${isDark ? "#2a2a2a" : "#e8e7e4"}`,
+            marginBottom: "16px",
+            marginTop: "16px",
+            color: isDark ? "#e5e5e5" : "#000",
+          }}
+        >
+          <a
+            href="https://github.com/mohit-rajput-py/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none", color: "inherit", margin: "0 8px"}}
+          >
+            GitHub
+          </a>{" "}
+          ·{" "}
+          <a
+            href="https://vercel.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none", color: "inherit", margin: "0 8px"}}
+          >
+            Vercel
+          </a>{"  "}
+          ·{" "}
+          <a
+            href="https://nextjs.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none", color: "inherit", margin: "0 8px"}}
+          >
+            Next.js
+          </a>
+        </div>
             
        {/* Dark theme styles */}
        {isDark && (

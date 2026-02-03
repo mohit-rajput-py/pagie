@@ -132,9 +132,12 @@ export default function PublicSidebar({ isOpen, onClose, theme, toggleTheme }) {
         <div
           style={{
             padding: "12px",
+            paddingTop: "16px",
             textAlign: "center",
             fontSize: "0.875rem",
             borderTop: `1px solid ${isDark ? "#2a2a2a" : "#e8e7e4"}`,
+            marginBottom: "16px",
+            marginTop: "16px",
             color: isDark ? "#e5e5e5" : "#000",
           }}
         >
