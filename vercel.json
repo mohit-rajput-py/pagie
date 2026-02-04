@@ -1,0 +1,13 @@
+{
+  "headers": [
+    {
+      "source": "/:slug",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=600, s-maxage=86400, stale-while-revalidate=3600"
+        }
+      ]
+    }
+  ]
+}
