@@ -15,7 +15,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <ServiceWorkerRegister />
+        {/* <ServiceWorkerRegister /> */}
         <Analytics />
         {children}
       </body>
