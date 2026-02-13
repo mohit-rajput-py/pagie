@@ -8,27 +8,25 @@ import { useEffect } from "react";
  */
 export default function ServiceWorkerRegister() {
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      "serviceWorker" in navigator &&
-      window.location.protocol === "https:"
-    ) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("Service Worker registered with scope:", registration.scope);
-        })
-        .catch((error) => {
-          console.error("Service Worker registration failed:", error);
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      // 1. Unregister all service workers
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+          console.log("Service Worker unregistered");
+        }
+      });
+
+      // 2. Clear all caches
+      if ("caches" in window) {
+        caches.keys().then((names) => {
+          for (const name of names) {
+            caches.delete(name);
+            console.log("Cache deleted:", name);
+          }
         });
-    } else if (
-        typeof window !== "undefined" &&
-        "serviceWorker" in navigator &&
-        window.location.hostname === "localhost"
-      ) {
-        // Allow localhost testing
-        navigator.serviceWorker.register("/sw.js");
       }
+    }
   }, []);
 
   return null;
