@@ -103,37 +103,7 @@ export default function Sidebar({
 
       {/* Breadcrumbs / Navigation */}
       <div className="sidebar-nav">
-        {currentFolderId && (
-          <button 
-            className="nav-back-btn" 
-            onClick={() => {
-                // Navigate to parent. Breadcrumbs array: [Root, ..., Parent, Current]
-                // If we are at root, currentFolderId is null.
-                // If we are deep, breadcrumbs has the path.
-                // Parent ID is the second to last item's ID, or null if only 1 item.
-                if (breadcrumbs.length > 0) {
-                     // The last crumb is current folder. Parent is at index length-2.
-                     // usage: breadcrumbs = [{id: A}, {id: B}] -> Current is B. Parent is A.
-                     // If breadcrumbs = [{id: A}] -> Current is A. Parent is Root (null).
-                     
-                     // Helper: useFileSystem hook manages logic? No, we just pass ID.
-                     // Simplest: parent of current folder.
-                     // We don't have direct "parent ID" easily unless we look at nodes (which only has children)
-                     // or use breadcrumbs.
-                     if (breadcrumbs.length > 1) {
-                         onNavigate(breadcrumbs[breadcrumbs.length - 2].id);
-                     } else {
-                         onNavigate(null); // Go to root
-                     }
-                } else {
-                    onNavigate(null);
-                }
-            }}
-          >
-            <CornerUpLeft size={14} />
-            <span>Back</span>
-          </button>
-        )}
+        
         
         <div className="breadcrumbs">
           <span 

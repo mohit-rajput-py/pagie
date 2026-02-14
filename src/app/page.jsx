@@ -127,9 +127,6 @@ export default function Home() {
     }
   }, [activeFile, isSharing, showToastMessage]);
 
-  /**
-   * Export current document as Markdown
-   */
   const handleExport = useCallback((markdownContent) => {
     const blob = new Blob([markdownContent], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
@@ -142,9 +139,7 @@ export default function Home() {
     URL.revokeObjectURL(url);
   }, [activeFile?.name]);
 
-  /**
-   * Handle Move (Basic)
-   */
+ 
   const handleMove = useCallback(async (id) => {
       // Basic implementation: Move to root if not in root, 
       // or if in root, prompt (but here we just do simple move up for demo)
