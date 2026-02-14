@@ -1,32 +1,40 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import Sidebar from "@/components/Sidebar";
-import Header from "@/components/Header";
-import Editor from "@/components/Editor";
-
-import { useDocuments } from "@/hooks/useDocuments";
-import { htmlToMarkdown, markdownToHtml } from "@/lib/markdownUtils";
 
 /**
  * Main Page Component
  * Manages documents state and orchestrates the editor UI
  */
+import { useState, useCallback, useRef, useEffect } from "react";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import Editor from "@/components/Editor";
+
+import { useFileSystem } from "@/hooks/useFileSystem";
+import { htmlToMarkdown, markdownToHtml } from "@/lib/markdownUtils";
+
+/**
+ * Main Page Component
+ * Manages file system state and orchestrates the editor UI
+ */
 export default function Home() {
-  // Document state management via custom hook
+  // File System state management via custom hook
   const {
-    documents,
-    activeDocId,
-    activeDocument,
+    currentFolderId,
+    nodes,
+    breadcrumbs,
     loading,
-    setActiveDocId,
-    createDocument,
-    updateCurrentDocument,
-    renameDocument,
-    duplicateDocument,
-    removeDocument,
-    saveImmediate
-  } = useDocuments();
+    activeFileId,
+    activeFile,
+    navigate,
+    createFolder,
+    createFile,
+    renameItem,
+    deleteItem,
+    saveFileContent,
+    setActiveFileId,
+    moveItem
+  } = useFileSystem();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [toastMessage, setToastMessage] = useState("");
@@ -45,62 +53,32 @@ export default function Home() {
     setTimeout(() => setShowToast(false), 3000);
   }, []);
 
-  /**
+  /*
    * Handle content updates from the editor
-   * Updates the document in state and extracts title from first heading
+   * Updates the file in DB and updates name if H1 changes
    */
   const handleContentChange = useCallback((content, plainText) => {
-    // Extract title from first H1 or use first line of text
-    let newTitle = activeDocument?.title;
-    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
-    if (h1Match && h1Match[1]) {
-      // Strip HTML tags from the matched content
-      newTitle = h1Match[1].replace(/<[^>]*>/g, "").trim();
-    } else if (plainText) {
-      // Use first line of plain text
-      const firstLine = plainText.split("\n")[0].trim();
-      if (firstLine) {
-        newTitle = firstLine.substring(0, 50);
-      }
+    if (activeFileId) {
+        // 1. Save content
+        saveFileContent(activeFileId, content);
+
+        // 2. Extract title from first H1 to update filename (Auto-rename feature)
+        // We throttle this to prevent constant DB updates for name
+        // actually name update is cheap, but let's be careful.
+        let newName = null;
+        const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
+        if (h1Match && h1Match[1]) {
+            newName = h1Match[1].replace(/<[^>]*>/g, "").trim();
+        }
+
+        // Only rename if significantly different and present
+        if (newName && activeFile && newName !== activeFile.name) {
+             // We use the hook's renameItem which refreshes the folder view too.
+             // This keeps sidebar in sync.
+             renameItem(activeFileId, newName).catch(err => console.error("Auto-rename failed", err));
+        }
     }
-    
-    updateCurrentDocument(content, newTitle || "Untitled");
-  }, [activeDocument?.title, updateCurrentDocument]);
-
-  /**
-   * Create a new document
-   */
-  const handleNewDocument = useCallback(() => {
-    createDocument();
-  }, [createDocument]);
-
-  /**
-   * Rename a document
-   */
-  const handleRenameDocument = useCallback((docId, newTitle) => {
-    renameDocument(docId, newTitle);
-  }, [renameDocument]);
-
-  /**
-   * Delete a document
-   */
-  const handleDeleteDocument = useCallback((docId) => {
-    removeDocument(docId);
-  }, [removeDocument]);
-
-  /**
-   * Duplicate a document
-   */
-  const handleDuplicateDocument = useCallback((docId) => {
-    duplicateDocument(docId);
-  }, [duplicateDocument]);
-
-  /**
-   * Switch to a different document
-   */
-  const handleDocumentSelect = useCallback((docId) => {
-    setActiveDocId(docId);
-  }, [setActiveDocId]);
+  }, [activeFileId, activeFile, saveFileContent, renameItem]);
 
   /**
    * Toggle sidebar visibility
@@ -111,16 +89,14 @@ export default function Home() {
 
   /**
    * Handle share button click
-   * Saves document to MongoDB and copies public URL to clipboard
    */
   const handleShare = useCallback(async () => {
-    if (!activeDocument || isSharing) return;
+    if (!activeFile || isSharing) return;
     
     setIsSharing(true);
     
     try {
-      // Send raw HTML content directly to API (No Markdown conversion)
-      const contentToShare = activeDocument.content;
+      const contentToShare = activeFile.content || "";
       
       // Send to API
       const response = await fetch("/api/share", {
@@ -130,7 +106,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           content: contentToShare,
-          title: activeDocument.title,
+          title: activeFile.name,
         }),
       });
       
@@ -149,7 +125,7 @@ export default function Home() {
     } finally {
       setIsSharing(false);
     }
-  }, [activeDocument, isSharing, showToastMessage]);
+  }, [activeFile, isSharing, showToastMessage]);
 
   /**
    * Export current document as Markdown
@@ -159,68 +135,43 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${activeDocument?.title || "document"}.md`;
+    a.download = `${activeFile?.name || "document"}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [activeDocument?.title]);
+  }, [activeFile?.name]);
 
   /**
-   * Trigger file import dialog
+   * Handle Move (Basic)
    */
-  const handleImportClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  /**
-   * Handle imported Markdown file
-   */
-  const handleFileImport = useCallback((event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result;
-      if (typeof content === "string") {
-        // Create a new document with imported content
-        const fileName = file.name.replace(/\.md$/i, "");
-        
-        const newDoc = {
-          id: Date.now().toString(),
-          title: fileName,
-          content: markdownToHtml(content),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        // Optimistic update
-        setDocuments((prev) => [newDoc, ...prev]);
-        setActiveDocId(newDoc.id);
-        
-        // Persist to IndexedDB
-        saveImmediate(newDoc);
+  const handleMove = useCallback(async (id) => {
+      // Basic implementation: Move to root if not in root, 
+      // or if in root, prompt (but here we just do simple move up for demo)
+      if (currentFolderId) {
+          await moveItem(id, null); // Move to root
+          showToastMessage("Moved to Home");
+      } else {
+          showToastMessage("Already in Home");
       }
-    };
-    reader.readAsText(file);
-    // Reset the input
-    event.target.value = "";
-  }, []);
+  }, [currentFolderId, moveItem, showToastMessage]);
 
   return (
     <div className="app-container">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
-        documents={documents}
-        activeDocId={activeDocId}
-        onDocumentSelect={handleDocumentSelect}
-        onNewDocument={handleNewDocument}
-        onImport={handleImportClick}
-        onRename={handleRenameDocument}
-        onDelete={handleDeleteDocument}
-        onDuplicate={handleDuplicateDocument}
+        nodes={nodes}
+        currentFolderId={currentFolderId}
+        breadcrumbs={breadcrumbs}
+        activeFileId={activeFileId}
+        onNavigate={navigate}
+        onFileSelect={setActiveFileId}
+        onCreateFolder={createFolder}
+        onCreateFile={createFile}
+        onRename={renameItem}
+        onDelete={deleteItem}
+        onMove={handleMove}
       />
 
       {/* Main Content */}
@@ -234,26 +185,25 @@ export default function Home() {
 
         <div className="editor-container">
           <div className="editor-wrapper">
-            {activeDocument && (
+            {activeFile ? (
               <Editor
-                key={activeDocId}
-                content={activeDocument.content}
+                key={activeFileId} // Remount editor when switching files
+                content={activeFile.content || ""}
                 onContentChange={handleContentChange}
                 onExport={handleExport}
+                readOnly={false}
               />
+            ) : (
+                <div className="empty-state">
+                    <div className="empty-content">
+                        <h3>Select a file to edit</h3>
+                        <p>Or create a new one from the sidebar.</p>
+                    </div>
+                </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* Hidden file input for import */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".md,.markdown,.txt"
-        onChange={handleFileImport}
-        className="hidden-input"
-      />
 
       {/* Toast notification */}
       <div className={`tooltip ${showToast ? "visible" : ""}`}>

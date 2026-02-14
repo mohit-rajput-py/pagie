@@ -1,22 +1,35 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Plus, FileText, Upload, MoreVertical, Trash2, Edit2, Copy } from "lucide-react";
+import { 
+  Plus, 
+  FileText, 
+  Folder, 
+  MoreVertical, 
+  Trash2, 
+  Edit2, 
+  CornerUpLeft, 
+  Move,
+  ChevronRight
+} from "lucide-react";
 
 /**
  * Sidebar Component
- * Displays document list with navigation, actions, and context menu
+ * Displays file system nodes with navigation, actions, and context menu
  */
 export default function Sidebar({
   isOpen,
-  documents,
-  activeDocId,
-  onDocumentSelect,
-  onNewDocument,
-  onImport,
+  nodes, // Array of current folder contents
+  currentFolderId,
+  breadcrumbs,
+  activeFileId,
+  onNavigate,
+  onFileSelect,
+  onCreateFolder,
+  onCreateFile,
   onRename,
   onDelete,
-  onDuplicate,
+  onMove
 }) {
   const [contextMenu, setContextMenu] = useState(null);
   const [renamingId, setRenamingId] = useState(null);
@@ -43,18 +56,20 @@ export default function Sidebar({
     }
   }, [renamingId]);
 
-  const handleContextMenu = (e, docId) => {
+  const handleContextMenu = (e, nodeId, type) => {
     e.preventDefault();
+    e.stopPropagation();
     setContextMenu({
       x: e.pageX,
       y: e.pageY,
-      docId,
+      nodeId,
+      type
     });
   };
 
-  const startRenaming = (docId, currentTitle) => {
-    setRenamingId(docId);
-    setRenameValue(currentTitle);
+  const startRenaming = (nodeId, currentName) => {
+    setRenamingId(nodeId);
+    setRenameValue(currentName);
     setContextMenu(null);
   };
 
@@ -73,19 +88,80 @@ export default function Sidebar({
     }
   };
 
+  const handleContainerContextMenu = (e) => {
+      e.preventDefault();
+      // Only show if clicking empty space, maybe for "New Folder"?
+      // For now, let's just ignore or show a generic menu if needed.
+  };
+
   return (
-    <aside className={`sidebar ${isOpen ? "open" : ""}`} onContextMenu={(e) => e.preventDefault()}>
+    <aside className={`sidebar ${isOpen ? "open" : ""}`} onContextMenu={handleContainerContextMenu}>
       {/* Sidebar Header */}
       <div className="sidebar-header">
         <h1 className="sidebar-title">Pagie</h1>
       </div>
 
-      {/* Document List */}
+      {/* Breadcrumbs / Navigation */}
+      <div className="sidebar-nav">
+        {currentFolderId && (
+          <button 
+            className="nav-back-btn" 
+            onClick={() => {
+                // Navigate to parent. Breadcrumbs array: [Root, ..., Parent, Current]
+                // If we are at root, currentFolderId is null.
+                // If we are deep, breadcrumbs has the path.
+                // Parent ID is the second to last item's ID, or null if only 1 item.
+                if (breadcrumbs.length > 0) {
+                     // The last crumb is current folder. Parent is at index length-2.
+                     // usage: breadcrumbs = [{id: A}, {id: B}] -> Current is B. Parent is A.
+                     // If breadcrumbs = [{id: A}] -> Current is A. Parent is Root (null).
+                     
+                     // Helper: useFileSystem hook manages logic? No, we just pass ID.
+                     // Simplest: parent of current folder.
+                     // We don't have direct "parent ID" easily unless we look at nodes (which only has children)
+                     // or use breadcrumbs.
+                     if (breadcrumbs.length > 1) {
+                         onNavigate(breadcrumbs[breadcrumbs.length - 2].id);
+                     } else {
+                         onNavigate(null); // Go to root
+                     }
+                } else {
+                    onNavigate(null);
+                }
+            }}
+          >
+            <CornerUpLeft size={14} />
+            <span>Back</span>
+          </button>
+        )}
+        
+        <div className="breadcrumbs">
+          <span 
+            className={`breadcrumb-item ${!currentFolderId ? 'active' : ''}`}
+            onClick={() => onNavigate(null)}
+          >
+            Home
+          </span>
+          {breadcrumbs.map((crumb, index) => (
+            <span key={crumb.id} className="breadcrumb-wrapper">
+                <ChevronRight size={12} className="breadcrumb-separator"/>
+                <span 
+                    className={`breadcrumb-item ${index === breadcrumbs.length - 1 ? 'active' : ''}`}
+                    onClick={() => onNavigate(crumb.id)}
+                >
+                    {crumb.name}
+                </span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Node List */}
       <div className="sidebar-content">
         <ul className="doc-list">
-          {documents.map((doc) => (
-            <li key={doc.id} onContextMenu={(e) => handleContextMenu(e, doc.id)}>
-              {renamingId === doc.id ? (
+          {nodes.map((node) => (
+            <li key={node.id} onContextMenu={(e) => handleContextMenu(e, node.id, node.type)}>
+              {renamingId === node.id ? (
                 <div className="rename-container" style={{ padding: "4px 8px" }}>
                   <input
                     ref={renameInputRef}
@@ -101,32 +177,40 @@ export default function Sidebar({
               ) : (
                 <div className="doc-item-wrapper" style={{ position: "relative" }}>
                   <button
-                    className={`doc-item ${doc.id === activeDocId ? "active" : ""}`}
-                    onClick={() => onDocumentSelect(doc.id)}
-                    title={doc.title}
+                    className={`doc-item ${node.id === activeFileId ? "active" : ""}`}
+                    onClick={() => {
+                        if (node.type === 'folder') {
+                            onNavigate(node.id);
+                        } else {
+                            onFileSelect(node.id);
+                        }
+                    }}
+                    title={node.name}
                   >
-                    <FileText
-                      size={14}
-                      style={{ marginRight: "8px", flexShrink: 0, opacity: 0.6 }}
-                    />
+                    {node.type === 'folder' ? (
+                        <Folder size={16} style={{ marginRight: "8px", flexShrink: 0, color: "var(--accent-color)" }} fill="currentColor" fillOpacity={0.2} />
+                    ) : (
+                        <FileText size={14} style={{ marginRight: "8px", flexShrink: 0, opacity: 0.6 }} />
+                    )}
+                    
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {doc.title || "Untitled"}
+                      {node.name || "Untitled"}
                     </span>
                   </button>
                   
-                  {/* Quick Action Menu Button (optional visual cue) */}
+                  {/* Menu Trigger */}
                   <button 
                     className="item-menu-trigger"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleContextMenu(e, doc.id);
+                      handleContextMenu(e, node.id, node.type);
                     }}
                     style={{
                       position: "absolute",
                       right: "8px",
                       top: "50%",
                       transform: "translateY(-50%)",
-                      opacity: 0, // Visible on hover via CSS
+                      opacity: 0,
                       padding: "4px",
                       border: "none",
                       background: "transparent",
@@ -141,22 +225,20 @@ export default function Sidebar({
             </li>
           ))}
         </ul>
-
-        {/* New Document Button */}
-        <button className="new-doc-btn" onClick={onNewDocument}>
-          <Plus size={16} />
-          <span>New Document</span>
-        </button>
       </div>
-
-      {/* Sidebar Footer with Import */}
+      
+      {/* Actions Footer */}
       <div className="sidebar-footer">
-        <div className="doc-actions">
-          <button className="action-btn" onClick={onImport}>
-            <Upload size={14} />
-            <span>Import</span>
-          </button>
-        </div>
+          <div className="doc-actions" style={{gap: '8px'}}>
+            <button className="action-btn" onClick={() => onCreateFile("Untitled")}>
+                <Plus size={14} />
+                <span>New File</span>
+            </button>
+            <button className="action-btn" onClick={() => onCreateFolder("New Folder")}>
+                <Folder size={14} />
+                <span>New Folder</span>
+            </button>
+          </div>
       </div>
 
       {/* Context Menu */}
@@ -173,7 +255,7 @@ export default function Sidebar({
         >
           <button
             className="context-menu-item"
-            onClick={() => startRenaming(contextMenu.docId, documents.find(d => d.id === contextMenu.docId)?.title)}
+            onClick={() => startRenaming(contextMenu.nodeId, nodes.find(n => n.id === contextMenu.nodeId)?.name)}
           >
             <Edit2 size={14} />
             <span>Rename</span>
@@ -181,18 +263,28 @@ export default function Sidebar({
           <button
             className="context-menu-item"
             onClick={() => {
-              onDuplicate(contextMenu.docId);
-              setContextMenu(null);
+                // Simple move: Prompt for Parent ID (Root or nothing for now as text is hard)
+                // Let's implement a wrapper onMove that works for now.
+                // For MVP: Move to Parent (..).
+                if (currentFolderId) {
+                    // We are in a folder, allow moving to root?
+                    // Better: onMove(id) triggers a UI mode or dialog.
+                    // Let's just use Rename for now as standard action.
+                    onMove(contextMenu.nodeId); // Logic to be handled in parent
+                } else {
+                    alert("Move functionality to specific folders requires a picker. Currently supporting basic moves.");
+                }
+                setContextMenu(null);
             }}
           >
-            <Copy size={14} />
-            <span>Duplicate</span>
+            <Move size={14} />
+            <span>Move...</span>
           </button>
           <div className="context-menu-divider" />
           <button
             className="context-menu-item delete"
             onClick={() => {
-              onDelete(contextMenu.docId);
+              onDelete(contextMenu.nodeId);
               setContextMenu(null);
             }}
           >
