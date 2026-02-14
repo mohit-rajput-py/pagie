@@ -5,83 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Editor from "@/components/Editor";
 
-/**
- * Default documents to start with
- */
-const defaultDocuments = [
-  {
-    id: "1",
-    title: "Welcome to Pagie",
-    content: `<h1>Welcome to Pagie</h1>
-<p>A beautiful, distraction-free Markdown editor inspired by Notion and Obsidian.</p>
-<h2>Getting Started</h2>
-<p>Just start typing! Use Markdown shortcuts for quick formatting:</p>
-<ul>
-<li>Type <code>#</code> followed by space for headings</li>
-<li>Type <code>-</code> or <code>*</code> followed by space for bullet lists</li>
-<li>Type <code>1.</code> followed by space for numbered lists</li>
-<li>Type <code>&gt;</code> followed by space for blockquotes</li>
-<li>Wrap text with backticks for <code>inline code</code></li>
-</ul>
-<h2>Keyboard Shortcuts</h2>
-<p>Speed up your writing with these shortcuts:</p>
-<ul>
-<li><strong>Ctrl+B</strong> — Bold</li>
-<li><strong>Ctrl+I</strong> — Italic</li>
-<li><strong>Ctrl+E</strong> — Inline code</li>
-<li><strong>Ctrl+Shift+8</strong> — Bullet list</li>
-<li><strong>Ctrl+Shift+7</strong> — Numbered list</li>
-</ul>
-<blockquote><p>Tip: Your documents are saved in your browser. Try creating a new document from the sidebar!</p></blockquote>`,
-  },
-  {
-    id: "2",
-    title: "Code Examples",
-    content: `<h1>Code Blocks</h1>
-<p>Pagie supports syntax-highlighted code blocks. Try typing three backticks followed by a language name:</p>
-<pre><code class="language-javascript">// A simple greeting function
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
-
-console.log(greet("World"));</code></pre>
-<p>Code blocks support multiple languages including JavaScript, Python, TypeScript, and more.</p>
-<pre><code class="language-python"># Python example
-def fibonacci(n):
-    if n <= 1:
-        return n
-    return fibonacci(n - 1) + fibonacci(n - 2)
-
-print([fibonacci(i) for i in range(10)])</code></pre>`,
-  },
-  {
-    id: "3",
-    title: "Meeting Notes",
-    content: `<h1>Meeting Notes</h1>
-<p>Use this document as a template for your meeting notes.</p>
-<h2>Attendees</h2>
-<ul>
-<li>Person 1</li>
-<li>Person 2</li>
-<li>Person 3</li>
-</ul>
-<h2>Agenda</h2>
-<ol>
-<li>Review last week's action items</li>
-<li>Discuss current project status</li>
-<li>Plan next sprint</li>
-</ol>
-<h2>Notes</h2>
-<p>Start taking notes here...</p>
-<h2>Action Items</h2>
-<ul>
-<li>[ ] First action item</li>
-<li>[ ] Second action item</li>
-<li>[ ] Third action item</li>
-</ul>`,
-  },
-];
-
+import { useDocuments } from "@/hooks/useDocuments";
 import { htmlToMarkdown, markdownToHtml } from "@/lib/markdownUtils";
 
 /**
@@ -89,9 +13,21 @@ import { htmlToMarkdown, markdownToHtml } from "@/lib/markdownUtils";
  * Manages documents state and orchestrates the editor UI
  */
 export default function Home() {
-  // Document state management
-  const [documents, setDocuments] = useState(defaultDocuments);
-  const [activeDocId, setActiveDocId] = useState(defaultDocuments[0].id);
+  // Document state management via custom hook
+  const {
+    documents,
+    activeDocId,
+    activeDocument,
+    loading,
+    setActiveDocId,
+    createDocument,
+    updateCurrentDocument,
+    renameDocument,
+    duplicateDocument,
+    removeDocument,
+    saveImmediate
+  } = useDocuments();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
@@ -99,9 +35,6 @@ export default function Home() {
   
   // Ref for file input
   const fileInputRef = useRef(null);
-
-  // Get the currently active document
-  const activeDocument = documents.find((doc) => doc.id === activeDocId);
 
   /**
    * Show a toast notification
@@ -117,108 +50,57 @@ export default function Home() {
    * Updates the document in state and extracts title from first heading
    */
   const handleContentChange = useCallback((content, plainText) => {
-    setDocuments((prev) =>
-      prev.map((doc) => {
-        if (doc.id === activeDocId) {
-          // Extract title from first H1 or use first line of text
-          let newTitle = doc.title;
-          const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
-          if (h1Match && h1Match[1]) {
-            // Strip HTML tags from the matched content
-            newTitle = h1Match[1].replace(/<[^>]*>/g, "").trim();
-          } else if (plainText) {
-            // Use first line of plain text
-            const firstLine = plainText.split("\n")[0].trim();
-            if (firstLine) {
-              newTitle = firstLine.substring(0, 50);
-            }
-          }
-          
-          return {
-            ...doc,
-            content,
-            title: newTitle || "Untitled",
-          };
-        }
-        return doc;
-      })
-    );
-  }, [activeDocId]);
+    // Extract title from first H1 or use first line of text
+    let newTitle = activeDocument?.title;
+    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
+    if (h1Match && h1Match[1]) {
+      // Strip HTML tags from the matched content
+      newTitle = h1Match[1].replace(/<[^>]*>/g, "").trim();
+    } else if (plainText) {
+      // Use first line of plain text
+      const firstLine = plainText.split("\n")[0].trim();
+      if (firstLine) {
+        newTitle = firstLine.substring(0, 50);
+      }
+    }
+    
+    updateCurrentDocument(content, newTitle || "Untitled");
+  }, [activeDocument?.title, updateCurrentDocument]);
 
   /**
    * Create a new document
    */
   const handleNewDocument = useCallback(() => {
-    const newDoc = {
-      id: Date.now().toString(),
-      title: "Untitled",
-      content: "<p></p>",
-    };
-    setDocuments((prev) => [newDoc, ...prev]);
-    setActiveDocId(newDoc.id);
-  }, []);
+    createDocument();
+  }, [createDocument]);
 
   /**
    * Rename a document
    */
   const handleRenameDocument = useCallback((docId, newTitle) => {
-    setDocuments((prev) =>
-      prev.map((doc) => (doc.id === docId ? { ...doc, title: newTitle } : doc))
-    );
-  }, []);
+    renameDocument(docId, newTitle);
+  }, [renameDocument]);
 
   /**
    * Delete a document
    */
   const handleDeleteDocument = useCallback((docId) => {
-    setDocuments((prev) => {
-      const newDocs = prev.filter((doc) => doc.id !== docId);
-      // If we deleted the active doc, switch to the first available one
-      if (activeDocId === docId && newDocs.length > 0) {
-        setActiveDocId(newDocs[0].id);
-      } else if (newDocs.length === 0) {
-        // If no docs left, create a new untitled one
-        const newDoc = {
-          id: Date.now().toString(),
-          title: "Untitled",
-          content: "<p></p>",
-        };
-        setActiveDocId(newDoc.id);
-        return [newDoc];
-      }
-      return newDocs;
-    });
-  }, [activeDocId]);
+    removeDocument(docId);
+  }, [removeDocument]);
 
   /**
    * Duplicate a document
    */
   const handleDuplicateDocument = useCallback((docId) => {
-    setDocuments((prev) => {
-      const docToClone = prev.find((doc) => doc.id === docId);
-      if (!docToClone) return prev;
-
-      const newDoc = {
-        ...docToClone,
-        id: Date.now().toString(), // Simple ID generation
-        title: `${docToClone.title} (Copy)`,
-      };
-      
-      // Insert after original
-      const index = prev.findIndex(d => d.id === docId);
-      const newDocs = [...prev];
-      newDocs.splice(index + 1, 0, newDoc);
-      
-      return newDocs;
-    });
-  }, []);
+    duplicateDocument(docId);
+  }, [duplicateDocument]);
 
   /**
    * Switch to a different document
    */
   const handleDocumentSelect = useCallback((docId) => {
     setActiveDocId(docId);
-  }, []);
+  }, [setActiveDocId]);
 
   /**
    * Toggle sidebar visibility
@@ -304,13 +186,21 @@ export default function Home() {
       if (typeof content === "string") {
         // Create a new document with imported content
         const fileName = file.name.replace(/\.md$/i, "");
+        
         const newDoc = {
           id: Date.now().toString(),
           title: fileName,
           content: markdownToHtml(content),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
+        
+        // Optimistic update
         setDocuments((prev) => [newDoc, ...prev]);
         setActiveDocId(newDoc.id);
+        
+        // Persist to IndexedDB
+        saveImmediate(newDoc);
       }
     };
     reader.readAsText(file);
