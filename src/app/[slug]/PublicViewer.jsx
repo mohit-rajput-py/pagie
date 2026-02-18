@@ -95,23 +95,43 @@ export default function PublicViewer({ content, title, createdAt }) {
           }}
         >
           {/* Document metadata */}
-          <div 
-            style={{
-              marginBottom: "24px",
-              paddingBottom: "16px",
-              borderBottom: `1px solid ${isDark ? "#2a2a2a" : "#e8e7e4"}`,
-            }}
-          >
-            <time 
-              style={{
-                fontSize: "0.875rem",
-                opacity: 0.6,
-                fontFamily: "'Outfit', system-ui, sans-serif",
-              }}
-            >
-              {formattedDate}
-            </time>
-          </div>
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "24px",
+    paddingBottom: "16px",
+    borderBottom: `1px solid ${isDark ? "#2a2a2a" : "#e8e7e4"}`,
+  }}
+>
+  <time
+    style={{
+      fontSize: "0.875rem",
+      opacity: 0.6,
+      fontFamily: "'Outfit', system-ui, sans-serif",
+    }}
+  >
+    {formattedDate}
+  </time>
+
+  <button
+    onClick={() => window.print()}
+    style={{
+      padding: "6px 12px",
+      fontSize: "0.875rem",
+      fontFamily: "'Outfit', system-ui, sans-serif",
+      borderRadius: "6px",
+      border: `1px solid ${isDark ? "#2a2a2a" : "#d6d3d1"}`,
+      background: "transparent",
+      cursor: "pointer",
+    }}
+  >
+    Save
+  </button>
+</div>
+
+
           
           {/* 
             Render the shared Editor component in Read-Only mode.
