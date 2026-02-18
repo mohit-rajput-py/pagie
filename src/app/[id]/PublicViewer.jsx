@@ -97,6 +97,7 @@ export default function PublicViewer({ content, title, createdAt }) {
         >
           {/* Document metadata */}
           <div
+          className="print-hide"
   style={{
     display: "flex",
     justifyContent: "space-between",

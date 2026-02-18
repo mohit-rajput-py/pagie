@@ -1082,3 +1082,34 @@ body {
   pointer-events: none;
   background-color: transparent;
 }
+
+@media print {
+  .sidebar,
+  .sidebar-overlay,
+  .header,
+  .icon-btn,
+  .share-btn,
+  .new-doc-btn,
+  .doc-actions,
+  .tooltip,
+  .sidebar-nav,
+  .print-hide,
+  .nav-back-btn {
+    display: none !important;
+  }
+
+  .main-wrapper,
+  .main-wrapper.sidebar-open {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .editor-container {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .tiptap {
+    min-height: auto !important;
+  }
+}
