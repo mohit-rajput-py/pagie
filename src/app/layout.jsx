@@ -1,6 +1,7 @@
 import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 /**
  * Root Layout for Pagie
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
       <body>
         <ServiceWorkerRegister />
         <Analytics />
+        <SpeedInsights />
         {children}
       </body>
     </html>
