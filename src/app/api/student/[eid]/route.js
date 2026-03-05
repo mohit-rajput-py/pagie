@@ -15,9 +15,9 @@ const students = {
     }
 };
 
-export async function GET(request, { params }) {
+export async function GET(request) {
 
-    const student = students[params.eid];
+    const student = students[request.params.eid];
 
     if (!student) {
         return NextResponse.json(
